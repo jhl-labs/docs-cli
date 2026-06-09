@@ -33,10 +33,10 @@ jobs:
 
 ## 재사용 가능한 Action
 
-이 저장소의 [`action.yaml`](../action.yaml) 을 그대로 호출할 수 있습니다.
+별도 저장소 [`jhl-labs/docs-cli-action`](https://github.com/jhl-labs/docs-cli-action) 의 composite action 을 호출할 수 있습니다.
 
 ```yaml
-- uses: jhl-labs/docs-cli@main
+- uses: jhl-labs/docs-cli-action@main
   with:
     command: validate
     target: .
@@ -46,12 +46,11 @@ jobs:
 에이전트로 문서를 채우는 단계까지 포함하려면:
 
 ```yaml
-- uses: jhl-labs/docs-cli@main
+- uses: jhl-labs/docs-cli-action@main
   with:
     command: generate
     agent: claude
     target: .
-    validate: "true"
 ```
 
 ## 문서 사이트 배포 (GitHub Pages)

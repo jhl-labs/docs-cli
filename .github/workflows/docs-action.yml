@@ -1,0 +1,48 @@
+# Dogfoods the published action (jhl-labs/docs-cli-action) against this repo.
+#
+# This installs docs-cli from the public release/Pages, so it only works once a
+# release has been published and GitHub Pages is live. It is therefore manual
+# (workflow_dispatch). The source-built `ci.yml` is the real PR gate; this
+# workflow verifies the action itself end to end.
+name: docs (action)
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "docs-cli version to install (e.g. v0.1.0 or latest)"
+        required: false
+        default: latest
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate docs via docs-cli-action
+    runs-on: jhl-space
+    steps:
+      - name: Validate (strict)
+        uses: jhl-labs/docs-cli-action@main
+        with:
+          version: ${{ inputs.version }}
+          command: validate
+          target: .
+          strict: "true"
+
+      - name: Render site
+        uses: jhl-labs/docs-cli-action@main
+        with:
+          checkout: "false"
+          version: ${{ inputs.version }}
+          command: render
+          target: .
+          formats: html,xml
+
+      - name: Upload docs site
+        uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: docs-site
+          path: docs/_site
+          if-no-files-found: ignore

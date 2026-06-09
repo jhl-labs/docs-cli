@@ -199,15 +199,14 @@ jobs:
           path: docs/_site
 ```
 
-재사용 가능한 composite action 은 [`action.yaml`](action.yaml) 에 있습니다. AI 에이전트로 문서를 채우는 단계까지 자동화하려면:
+재사용 가능한 composite action 은 별도 저장소 [`jhl-labs/docs-cli-action`](https://github.com/jhl-labs/docs-cli-action) 으로 제공됩니다. 검증·렌더는 물론 AI 에이전트로 문서를 채우는 단계까지 자동화할 수 있습니다:
 
 ```yaml
-- uses: jhl-labs/docs-cli@main
+- uses: jhl-labs/docs-cli-action@main
   with:
     command: generate
     agent: claude
     target: .
-    validate: "true"
 ```
 
 자세한 내용은 [CI/CD 가이드](guides/ci-cd.md) 를 참고하세요.
