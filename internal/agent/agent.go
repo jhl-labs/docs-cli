@@ -119,7 +119,7 @@ func BuildPrompt(doc schema.Document, opts PromptOptions) string {
 		b.WriteString(fmt.Sprintf("주 구현 언어: %s\n", opts.Language))
 	}
 	b.WriteString(fmt.Sprintf("작성할 문서: %s — %s\n", doc.Title, doc.Purpose))
-	b.WriteString(fmt.Sprintf("저장 위치: %s/%s\n\n", defaultStr(opts.OutputDir, "docs"), doc.FileName()))
+	b.WriteString(fmt.Sprintf("표준 경로: %s/%s (파일 저장은 호출자가 합니다 — 직접 파일을 만들거나 쓰지 마세요)\n\n", defaultStr(opts.OutputDir, "docs"), doc.FileName()))
 
 	b.WriteString("## 작성 규칙 (반드시 준수)\n\n")
 	b.WriteString("1. 실제 소스 코드·설정·CI를 읽고 사실에 근거해 작성합니다. 추측은 명시적으로 표시합니다.\n")
@@ -143,7 +143,11 @@ func BuildPrompt(doc schema.Document, opts PromptOptions) string {
 		b.WriteString(fmt.Sprintf("   %d. `## %s` — %s\n", i+1, ch.Heading, ch.Guidance))
 	}
 	b.WriteString("\n5. 다이어그램은 Mermaid 코드블록(```mermaid)으로, 표는 GitHub 표 문법으로 작성합니다.\n")
-	b.WriteString("6. 한국어로 작성합니다. 출력은 완성된 Markdown 문서 본문만 포함합니다(설명 문구 금지).\n")
+	b.WriteString("6. 한국어로 작성합니다.\n\n")
+	b.WriteString("## 출력 규칙 (가장 중요)\n\n")
+	b.WriteString("- 응답은 **완성된 Markdown 문서 그 자체만** 출력합니다. 첫 글자는 프론트매터 여는 `---` 이어야 합니다.\n")
+	b.WriteString("- 파일을 직접 생성하거나 쓰지 마세요. 저장은 호출자가 표준 출력(stdout)을 받아 처리합니다.\n")
+	b.WriteString("- 질문하거나 승인을 요청하지 말고, 머리말·맺음말·설명을 덧붙이지 마세요. 코드펜스로 문서 전체를 감싸지도 마세요.\n")
 	return b.String()
 }
 

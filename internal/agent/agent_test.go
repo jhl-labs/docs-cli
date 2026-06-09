@@ -57,4 +57,10 @@ func TestBuildPromptContainsChaptersAndFrontmatter(t *testing.T) {
 			t.Errorf("prompt missing chapter %q", ch.Heading)
 		}
 	}
+
+	// The output contract must keep the agent from writing files or asking
+	// questions: docs-cli captures stdout and writes the file itself.
+	if !strings.Contains(prompt, "stdout") || !strings.Contains(prompt, "직접 파일을 만들거나 쓰지 마세요") {
+		t.Error("prompt missing stdout-only output contract")
+	}
 }
