@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>docs-cli</title>
+    <meta
+      name="description"
+      content="docs-cli는 어떤 저장소든 하나의 표준 스키마로 docs/ 폴더를 생성하고, AI 에이전트로 리버스 엔지니어링해 채우며, 검증·렌더링까지 수행하는 Go 단일 바이너리입니다."
+    />
+    <meta name="theme-color" content="#0f172a" />
+    <link rel="canonical" href="https://jhl-labs.github.io/docs-cli/" />
+    <script src="./assets/theme.js"></script>
+    <link rel="stylesheet" href="./assets/site.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">본문으로 이동</a>
+
+    <nav class="nav" aria-label="주요 탐색">
+      <div class="nav-inner">
+        <a class="brand" href="#">
+          <span class="brand-mark">DC</span>
+          <span class="brand-text">docs-cli</span>
+        </a>
+        <div class="nav-links">
+          <a href="#features">기능</a>
+          <a href="#schema">표준 스키마</a>
+          <a href="#download">다운로드</a>
+          <a href="#quickstart">빠른 시작</a>
+          <a href="./docs/">문서</a>
+        </div>
+        <div class="theme-switch" aria-label="테마 선택">
+          <button type="button" data-theme-choice="light" aria-pressed="false">라이트</button>
+          <button type="button" data-theme-choice="dark" aria-pressed="false">다크</button>
+          <button type="button" data-theme-choice="system" aria-pressed="true">시스템</button>
+        </div>
+      </div>
+    </nav>
+
+    <header class="hero">
+      <div class="hero-inner">
+        <div class="eyebrow"><span class="status-dot"></span> 스캐폴딩 · 생성 · 검증 · 렌더링</div>
+        <h1>docs-cli</h1>
+        <p class="hero-copy">
+          <code>docs-cli init .</code> 한 번이면 어떤 저장소든 <strong>하나의 표준 문서 스키마</strong>로
+          <code>docs/</code> 폴더가 생깁니다. AI 에이전트로 코드를 리버스 엔지니어링해 채우고,
+          정합성을 기계가 판정하며, HTML·XML로 렌더링해 웹 서비스에 그대로 이식합니다.
+        </p>
+        <div class="hero-actions">
+          <a class="button primary" href="#download">다운로드</a>
+          <a class="button" href="#quickstart">빠른 시작</a>
+          <a class="button" href="./docs/">문서 보기</a>
+          <a class="button" href="https://github.com/jhl-labs/docs-cli">GitHub</a>
+        </div>
+        <div class="hero-install" aria-label="공식 설치 명령">
+          <code id="install-command">curl -fsSL https://jhl-labs.github.io/docs-cli/install.sh | sudo bash</code>
+          <button type="button" data-copy-target="install-command" data-copy-label="복사" data-copied-label="복사됨">복사</button>
+        </div>
+        <div class="hero-facts" aria-label="핵심 가치">
+          <div class="fact"><strong>단일 출처</strong><span>스키마 하나에서 4개 도구가 파생</span></div>
+          <div class="fact"><strong>의존성 0</strong><span>Go 표준 라이브러리만, 오프라인 빌드</span></div>
+          <div class="fact"><strong>6개 언어</strong><span>Python·TS·Go·Rust·C#·Java 감지</span></div>
+        </div>
+      </div>
+    </header>
+
+    <main id="main">
+      <section id="features" class="section">
+        <h2>왜 docs-cli 인가</h2>
+        <div class="cards">
+          <article class="card">
+            <h3>표준 스키마</h3>
+            <p>섹션·문서·챕터·프론트매터가 코드로 고정됩니다. 프로젝트가 달라도 산출물 형태가 같습니다.</p>
+          </article>
+          <article class="card">
+            <h3>리버스 엔지니어링</h3>
+            <p><code>generate --agent claude</code> 로 코드를 읽어 문서를 채웁니다. claude·codex·gemini·opencode 지원.</p>
+          </article>
+          <article class="card">
+            <h3>검증 게이트</h3>
+            <p><code>validate</code> 가 필수 문서·프론트매터·챕터 누락을 기계적으로 판정합니다. 눈대중이 아닙니다.</p>
+          </article>
+          <article class="card">
+            <h3>웹 이식</h3>
+            <p>고정 프론트매터 + 구조적 XML 로 렌더링해 웹 서비스가 매핑 없이 ingest 합니다.</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="schema" class="section">
+        <h2>표준 문서 스키마 (v1)</h2>
+        <p class="muted">6개 섹션 · 17개 문서. 각 문서는 동일한 프론트매터 키와 고정된 챕터 구조를 가집니다.</p>
+        <div class="schema-grid">
+          <div class="pill"><strong>overview</strong> overview · glossary</div>
+          <div class="pill"><strong>architecture</strong> architecture · components · data-model · diagrams</div>
+          <div class="pill"><strong>interfaces</strong> api · cli-reference · config-reference</div>
+          <div class="pill"><strong>operations</strong> build-and-release · deployment · development · testing · security</div>
+          <div class="pill"><strong>decisions</strong> adr</div>
+          <div class="pill"><strong>reference</strong> roadmap · traceability</div>
+        </div>
+      </section>
+
+      <section id="download" class="section">
+        <h2>다운로드 · 설치</h2>
+        <div class="code-block">
+          <pre><code># 최신 공개 바이너리 설치
+curl -fsSL https://jhl-labs.github.io/docs-cli/install.sh | sudo bash
+
+# 버전 고정 / 사용자 경로 설치
+curl -fsSL https://jhl-labs.github.io/docs-cli/install.sh | sudo env VERSION=v0.1.0 bash
+curl -fsSL https://jhl-labs.github.io/docs-cli/install.sh | INSTALL_DIR="$HOME/.local/bin" bash</code></pre>
+        </div>
+        <p class="muted">Linux · macOS · Windows (amd64 / arm64). 설치 스크립트는 <code>jhl-labs/dist</code> 의 최신 릴리스를 받아 SHA256 으로 검증합니다.</p>
+      </section>
+
+      <section id="quickstart" class="section">
+        <h2>빠른 시작</h2>
+        <div class="code-block">
+          <pre><code>docs-cli init .                              # 표준 docs/ 트리 스캐폴딩
+docs-cli generate . --agent claude           # 에이전트로 문서 채우기
+docs-cli validate . --strict                 # 표준 정합성 게이트
+docs-cli render . --format html --format xml # 웹 이식용 산출물</code></pre>
+        </div>
+        <p class="muted">
+          CI 에서는 <a href="https://github.com/jhl-labs/docs-cli-action">jhl-labs/docs-cli-action</a> 으로 동일 흐름을 자동화합니다.
+        </p>
+      </section>
+
+      <section id="docs" class="section">
+        <h2>문서</h2>
+        <div class="doc-links">
+          <a class="button" href="./docs/">문서 인덱스</a>
+          <a class="button" href="./docs/overview.html">프로젝트 개요</a>
+          <a class="button" href="./docs/architecture.html">아키텍처</a>
+          <a class="button" href="./docs/cli-reference.html">CLI 레퍼런스</a>
+          <a class="button" href="./docs/SCHEMA.html">표준 스키마</a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        <span>© JHL Labs · docs-cli</span>
+        <span><a href="https://github.com/jhl-labs/docs-cli">GitHub</a> · <a href="https://github.com/jhl-labs/docs-cli-action">Action</a></span>
+      </div>
+    </footer>
+  </body>
+</html>

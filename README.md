@@ -235,6 +235,7 @@ internal/render/       Markdown → HTML / XML
 internal/skill/        SKILL.md 생성기 (superpowers 형식)
 internal/cli/          명령 디스패치·플래그·도움말
 guides/                사용자/운영자 가이드
+site/                  GitHub Pages 랜딩 사이트 + install.sh
 docs/                  docs-cli 자신의 표준 문서 (dogfooding)
 ```
 

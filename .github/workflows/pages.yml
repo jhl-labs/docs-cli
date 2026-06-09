@@ -7,6 +7,7 @@ on:
       - main
     paths:
       - docs/**
+      - site/**
       - internal/render/**
       - .github/workflows/pages.yml
   workflow_dispatch:
@@ -36,23 +37,21 @@ jobs:
           go-version-file: go.mod
           cache: true
 
-      - name: Build CLI and render docs site
+      - name: Build CLI and assemble Pages site
         shell: bash
         run: |
           set -euo pipefail
           go build -trimpath -o bin/docs-cli ./cmd/docs-cli
+          # Render the standardized docs to HTML.
           bin/docs-cli render . --format html
+          # Assemble: landing site at root, rendered docs under /docs/.
           mkdir -p public
-          cp -r docs/_site/* public/
-          cp docs/install.sh public/install.sh
-          if [[ -f docs/_site/README.html ]]; then
-            cp docs/_site/README.html public/index.html
-          fi
+          cp -r site/. public/
+          mkdir -p public/docs
+          cp -r docs/_site/. public/docs/
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v6
-        with:
-          enablement: true
 
       - name: Upload docs artifact
         uses: actions/upload-pages-artifact@v5

@@ -5,3 +5,4 @@ coverage.out
 .docs-cli/
 docs/_site/
 docs/_xml/
+public/

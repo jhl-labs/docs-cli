@@ -58,7 +58,7 @@ jobs:
         run: |
           set -euo pipefail
           bash -n scripts/build-release-artifacts.sh
-          bash -n docs/install.sh
+          bash -n site/install.sh
 
       - name: Build CLI
         run: |

@@ -1,0 +1,7 @@
+{
+  "app": "docs-cli",
+  "version": "unreleased",
+  "dist_repo": "jhl-labs/dist",
+  "install": "https://jhl-labs.github.io/docs-cli/install.sh",
+  "note": "version is updated by the release pipeline once docs-cli-v* is published to jhl-labs/dist"
+}
