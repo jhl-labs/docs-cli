@@ -1,0 +1,127 @@
+name: docs-cli
+description: Install docs-cli and run a standardized-docs command (init, generate, validate, render) in CI.
+
+inputs:
+  token:
+    description: GitHub token used for checkout and docs-cli installation.
+    required: false
+    default: ${{ github.token }}
+  checkout:
+    description: Whether this action should checkout the repository first.
+    required: false
+    default: "true"
+  version:
+    description: docs-cli version to install (e.g. v0.1.0), or latest.
+    required: false
+    default: latest
+  command:
+    description: docs-cli command to run (init|generate|validate|render).
+    required: false
+    default: validate
+  target:
+    description: Project path passed to docs-cli.
+    required: false
+    default: .
+  agent:
+    description: AI agent for generate (claude|codex|gemini|opencode|none).
+    required: false
+    default: none
+  formats:
+    description: Comma-separated render formats (html,xml).
+    required: false
+    default: html
+  validate:
+    description: Run docs-cli validate after the command and fail on errors.
+    required: false
+    default: "true"
+  strict:
+    description: Treat validation warnings as failures.
+    required: false
+    default: "false"
+  extra-args:
+    description: Extra arguments appended to the docs-cli command.
+    required: false
+    default: ""
+
+outputs:
+  exit-code:
+    description: docs-cli exit code for the primary command.
+    value: ${{ steps.run.outputs.exit-code }}
+
+runs:
+  using: composite
+  steps:
+    - name: Checkout repository
+      if: ${{ inputs.checkout == 'true' }}
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        token: ${{ inputs.token }}
+
+    - name: Install docs-cli
+      shell: bash
+      env:
+        DOCS_CLI_VERSION: ${{ inputs.version }}
+      run: |
+        set -euo pipefail
+        install_dir="${RUNNER_TEMP}/docs-cli/bin"
+        mkdir -p "${install_dir}"
+        if [ "${DOCS_CLI_VERSION}" = "latest" ] || [ -z "${DOCS_CLI_VERSION}" ]; then
+          curl -fsSL https://jhl-labs.github.io/docs-cli/install.sh | INSTALL_DIR="${install_dir}" bash
+        else
+          curl -fsSL https://jhl-labs.github.io/docs-cli/install.sh | INSTALL_DIR="${install_dir}" VERSION="${DOCS_CLI_VERSION}" bash
+        fi
+        echo "${install_dir}" >> "${GITHUB_PATH}"
+        "${install_dir}/docs-cli" --version
+
+    - name: Run docs-cli
+      id: run
+      shell: bash
+      env:
+        DOCS_CLI_COMMAND: ${{ inputs.command }}
+        DOCS_CLI_TARGET: ${{ inputs.target }}
+        DOCS_CLI_AGENT: ${{ inputs.agent }}
+        DOCS_CLI_FORMATS: ${{ inputs.formats }}
+        DOCS_CLI_EXTRA_ARGS: ${{ inputs.extra-args }}
+      run: |
+        set +e
+        args=("${DOCS_CLI_COMMAND}" "${DOCS_CLI_TARGET}")
+        case "${DOCS_CLI_COMMAND}" in
+          generate)
+            args+=(--agent "${DOCS_CLI_AGENT}")
+            ;;
+          render)
+            IFS=',' read -ra fmts <<< "${DOCS_CLI_FORMATS}"
+            for f in "${fmts[@]}"; do
+              trimmed="$(echo "${f}" | xargs)"
+              [ -n "${trimmed}" ] && args+=(--format "${trimmed}")
+            done
+            ;;
+        esac
+        extra=()
+        [ -n "${DOCS_CLI_EXTRA_ARGS}" ] && read -r -a extra <<< "${DOCS_CLI_EXTRA_ARGS}"
+        docs-cli "${args[@]}" "${extra[@]}"
+        code=$?
+        echo "exit-code=${code}" >> "${GITHUB_OUTPUT}"
+        exit 0
+
+    - name: Validate docs
+      if: ${{ inputs.validate == 'true' }}
+      shell: bash
+      env:
+        DOCS_CLI_TARGET: ${{ inputs.target }}
+        DOCS_CLI_STRICT: ${{ inputs.strict }}
+      run: |
+        set -euo pipefail
+        if [ "${DOCS_CLI_STRICT}" = "true" ]; then
+          docs-cli validate "${DOCS_CLI_TARGET}" --strict
+        else
+          docs-cli validate "${DOCS_CLI_TARGET}"
+        fi
+
+    - name: Enforce command result
+      if: ${{ steps.run.outputs.exit-code != '0' }}
+      shell: bash
+      run: |
+        echo "docs-cli exited with code ${{ steps.run.outputs.exit-code }}"
+        exit "${{ steps.run.outputs.exit-code }}"

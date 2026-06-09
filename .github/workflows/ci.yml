@@ -1,0 +1,82 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Static analysis, tests, and docs self-check
+    runs-on: jhl-space
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Check formatting
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -d '' files < <(find . -name '*.go' -not -path './.git/*' -not -path './dist/*' -print0)
+          if [[ "${#files[@]}" -eq 0 ]]; then
+            exit 0
+          fi
+          unformatted="$(gofmt -l "${files[@]}")"
+          if [[ -n "${unformatted}" ]]; then
+            echo "${unformatted}"
+            exit 1
+          fi
+
+      - name: Verify modules
+        run: go mod verify
+
+      - name: Static analysis
+        run: go vet ./...
+
+      - name: Test
+        run: go test ./...
+
+      - name: Validate release scripts
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash -n scripts/build-release-artifacts.sh
+          bash -n docs/install.sh
+
+      - name: Build CLI
+        run: |
+          mkdir -p bin
+          go build -trimpath -o bin/docs-cli ./cmd/docs-cli
+
+      - name: Docs self-check
+        shell: bash
+        run: |
+          set -euo pipefail
+          bin/docs-cli doctor
+          bin/docs-cli validate . --strict
+          bin/docs-cli render . --format html --format xml
+
+      - name: Upload docs site
+        uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: docs-site
+          path: docs/_site
+          if-no-files-found: ignore

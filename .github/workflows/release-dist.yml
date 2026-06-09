@@ -1,0 +1,161 @@
+name: Release docs-cli to dist
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version, for example v0.1.0"
+        required: true
+        type: string
+      prerelease:
+        description: "Mark the public GitHub Release as prerelease"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-docs-cli-${{ github.ref_name }}
+  cancel-in-progress: false
+
+env:
+  APP_NAME: docs-cli
+  DIST_REPO: jhl-labs/dist
+  DIST_REPO_TOKEN: ${{ secrets.DIST_REPO_TOKEN }}
+  INPUT_VERSION: ${{ github.event_name == 'workflow_dispatch' && inputs.version || '' }}
+  INPUT_PRERELEASE: ${{ github.event_name == 'workflow_dispatch' && inputs.prerelease || false }}
+
+jobs:
+  release:
+    name: Build and publish public artifacts
+    runs-on: jhl-space
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Resolve release version
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            version="${GITHUB_REF_NAME}"
+          else
+            version="${INPUT_VERSION}"
+          fi
+          if [[ ! "${version}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
+            echo "::error::release version must look like v0.1.0 or v0.1.0-rc.1"
+            exit 1
+          fi
+          echo "version=${version}" >> "${GITHUB_OUTPUT}"
+          echo "dist_tag=${APP_NAME}-${version}" >> "${GITHUB_OUTPUT}"
+
+      - name: Validate dist token
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${DIST_REPO_TOKEN}" ]]; then
+            echo "::error::DIST_REPO_TOKEN secret is required to write to ${DIST_REPO}"
+            exit 1
+          fi
+
+      - name: Check formatting
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -d '' files < <(find . -name '*.go' -not -path './.git/*' -not -path './dist/*' -print0)
+          unformatted="$(gofmt -l "${files[@]}")"
+          if [[ -n "${unformatted}" ]]; then
+            echo "${unformatted}"
+            exit 1
+          fi
+
+      - name: Verify modules
+        run: go mod verify
+
+      - name: Static analysis
+        run: go vet ./...
+
+      - name: Test
+        run: go test ./...
+
+      - name: Build release artifacts
+        shell: bash
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          COMMIT: ${{ github.sha }}
+          OUT_DIR: dist/release
+        run: scripts/build-release-artifacts.sh
+
+      - name: Generate release note
+        id: notes
+        shell: bash
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          notes_file="${RUNNER_TEMP}/docs-cli-release-note.md"
+          previous_tag="$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || true)"
+          {
+            echo "## docs-cli ${VERSION}"
+            echo
+            echo "- Source commit: \`${GITHUB_SHA}\`"
+            echo "- Distribution tag: \`${APP_NAME}-${VERSION}\`"
+            echo
+            echo "### Artifacts"
+            echo
+            find dist/release -maxdepth 1 -type f -printf "- %f\n" | sort
+            echo
+            echo "### Changes"
+            echo
+            if [[ -n "${previous_tag}" ]]; then
+              git log --pretty=format:"- %s (%h)" "${previous_tag}..HEAD"
+            else
+              git log --pretty=format:"- %s (%h)" -n 30
+            fi
+            echo
+          } > "${notes_file}"
+          echo "notes_file=${notes_file}" >> "${GITHUB_OUTPUT}"
+
+      - name: Publish public GitHub Release to dist
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.DIST_REPO_TOKEN }}
+          VERSION: ${{ steps.version.outputs.version }}
+          DIST_TAG: ${{ steps.version.outputs.dist_tag }}
+          NOTES_FILE: ${{ steps.notes.outputs.notes_file }}
+          PRERELEASE: ${{ env.INPUT_PRERELEASE }}
+        run: |
+          set -euo pipefail
+          prerelease_flag=()
+          if [[ "${PRERELEASE}" == "true" ]]; then
+            prerelease_flag=(--prerelease)
+          fi
+          if gh release view "${DIST_TAG}" --repo "${DIST_REPO}" >/dev/null 2>&1; then
+            gh release upload "${DIST_TAG}" dist/release/* --repo "${DIST_REPO}" --clobber
+          else
+            gh release create "${DIST_TAG}" dist/release/* \
+              --repo "${DIST_REPO}" \
+              --title "docs-cli ${VERSION}" \
+              --notes-file "${NOTES_FILE}" \
+              "${prerelease_flag[@]}"
+          fi
+
+      - name: Upload workflow artifact copy
+        uses: actions/upload-artifact@v7
+        with:
+          name: docs-cli-${{ steps.version.outputs.version }}
+          path: dist/release

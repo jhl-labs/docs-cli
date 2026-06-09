@@ -1,0 +1,7 @@
+bin/
+dist/
+coverage.out
+/docs-cli
+.docs-cli/
+docs/_site/
+docs/_xml/
