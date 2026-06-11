@@ -50,8 +50,15 @@ jobs:
       - name: Static analysis
         run: go vet ./...
 
-      - name: Test
-        run: go test ./...
+      - name: Test with coverage gate (>= 90%)
+        shell: bash
+        run: |
+          set -euo pipefail
+          go test ./... -coverprofile=coverage.out -covermode=atomic
+          go tool cover -func=coverage.out | tail -1
+          total="$(go tool cover -func=coverage.out | awk '/^total:/ {print $3}' | tr -d '%')"
+          echo "total coverage: ${total}%"
+          awk -v c="${total}" 'BEGIN { if (c+0 < 90.0) { print "coverage below 90% gate"; exit 1 } }'
 
       - name: Validate release scripts
         shell: bash

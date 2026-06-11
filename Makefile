@@ -1,4 +1,6 @@
-.PHONY: build test vet fmt fmt-check clean dogfood
+.PHONY: build test cover vet fmt fmt-check clean dogfood
+
+COVERAGE_MIN ?= 90
 
 BINARY ?= bin/docs-cli
 VERSION ?= dev
@@ -14,6 +16,13 @@ build:
 
 test:
 	go test ./...
+
+# Run tests with coverage and fail if the total is below COVERAGE_MIN (default 90%).
+cover:
+	go test ./... -coverprofile=coverage.out -covermode=atomic
+	@go tool cover -func=coverage.out | tail -1
+	@total=$$(go tool cover -func=coverage.out | awk '/^total:/ {print $$3}' | tr -d '%'); \
+	awk -v c="$$total" -v min="$(COVERAGE_MIN)" 'BEGIN { if (c+0 < min+0) { printf "coverage %.1f%% is below %s%%\n", c, min; exit 1 } printf "coverage %.1f%% meets %s%% gate\n", c, min }'
 
 vet:
 	go vet ./...
