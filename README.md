@@ -253,4 +253,7 @@ docs/                  docs-cli 자신의 표준 문서 (dogfooding)
 
 ## License
 
-License is not finalized yet. Until a `LICENSE` file is added, treat this repository as private/internal material owned by JHL Labs.
+[JHL License](./LICENSE) — 개인·교육·비상업적 용도로 자유롭게 사용/수정/배포할 수 있습니다.
+**바이너리와 소스 코드 모두 상업적 사용은 금지**되며, 상업적 사용은 개발자(Licensor)의
+사전 서면 허가가 있는 경우에만 허용됩니다. 소스를 수정하거나 배포하면 [이슈](https://github.com/jhl-labs/docs-cli/issues)
+등으로 알려 주세요(LICENSE 5조).
